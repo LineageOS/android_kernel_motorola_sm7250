@@ -4466,6 +4466,12 @@ CONFIG_ION_POOL_FILL_MARK=200
 # CONFIG_CHROME_PLATFORMS is not set
 
 #
+# Qualcomm Atheros CLD WLAN module
+#
+CONFIG_QCA_CLD_WLAN=m
+CONFIG_QCA_CLD_WLAN_PROFILE="default"
+
+#
 # Qualcomm technologies inc. MSM specific device drivers
 #
 CONFIG_MSM_EXT_DISPLAY=y
