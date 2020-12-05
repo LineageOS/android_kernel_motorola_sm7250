@@ -146,14 +146,6 @@ static void sync_event_print(struct seq_file *s,
 				sync_event->context->id, sync_event->timestamp);
 		break;
 	}
-	case KGSL_CMD_SYNCPOINT_TYPE_FENCE: {
-		int i;
-
-		for (i = 0; i < sync_event->info.num_fences; i++)
-			seq_printf(s, "sync: %s",
-				sync_event->info.fences[i].name);
-		break;
-	}
 	default:
 		seq_printf(s, "sync: type: %d", sync_event->type);
 		break;
