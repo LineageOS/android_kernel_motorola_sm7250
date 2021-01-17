@@ -361,6 +361,8 @@ struct dsi_panel {
 	bool force_fod_ui;
 	bool force_fod_dim_alpha;
 	bool hbm_state;
+	bool acl_state;
+	bool cabc_state;
 };
 
 bool dsi_display_all_displays_dead(void);
