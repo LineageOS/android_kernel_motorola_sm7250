@@ -928,6 +928,9 @@ static u32 dsi_panel_get_fod_dim_alpha(struct dsi_panel *panel)
 	if (!panel->fod_dim_lut)
 		return 0;
 
+	if (panel->hbm_state)
+		return 0;
+
 	for (i = 0; i < panel->fod_dim_lut_len; i++)
 		if (panel->fod_dim_lut[i].brightness >= brightness)
 			break;
