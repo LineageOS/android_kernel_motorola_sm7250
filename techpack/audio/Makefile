@@ -59,18 +59,9 @@ ifeq ($(CONFIG_ARCH_LITO), y)
 LINUXINCLUDE    += \
                 -include $(srctree)/techpack/audio/config/litoautoconf.h
 endif
-ifeq ($(CONFIG_NAIRO_DTB), y)
-LINUXINCLUDE    += \
-                -include $(srctree)/techpack/audio/config/litonairo_asoc.h \
-                -include $(srctree)/techpack/audio/config/litonairo.h
-endif
 ifeq ($(CONFIG_SMITH_DTB), y)
 LINUXINCLUDE    += \
                 -include $(srctree)/techpack/audio/config/litosmith.h
-endif
-ifeq ($(CONFIG_KIEV_DTB), y)
-LINUXINCLUDE    += \
-                -include $(srctree)/techpack/audio/config/litokiev.h
 endif
 
 obj-y += soc/
