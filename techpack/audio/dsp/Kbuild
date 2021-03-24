@@ -80,12 +80,18 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/gvmautoconf.h
 	endif
-	ifneq (,$(filter nairo%, $(TARGET_PRODUCT)))
-		INCS    +=  -include $(AUDIO_ROOT)/config/litonairo.h
+	ifeq ($(CONFIG_NAIRO_DTB), y)
+		include "$(AUDIO_ROOT)/config/litonairo.conf
+		export
+		INCS    +=  \
+                -include $(AUDIO_ROOT)/config/litonairo_asoc.h \
+                -include $(AUDIO_ROOT)/config/litonairo.h
 	endif
-        ifneq (,$(filter kiev%, $(TARGET_PRODUCT)))
-                INCS    +=  -include $(AUDIO_ROOT)/config/litokiev.h
-        endif
+	ifeq ($(CONFIG_KIEV_DTB), y)
+		include "$(AUDIO_ROOT)/config/litokiev.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/litokiev.h
+	endif
 
 endif
 
@@ -118,6 +124,20 @@ MOTO_KERN_INC := -I$(ANDROID_BUILD_TOP)/vendor/cirrus/audio/dlkm/include
 
 ifneq ($(filter m y,$(CONFIG_CIRRUS_PLAYBACK)),)
 	EXTRA_CFLAGS += -DCONFIG_CIRRUS_PLAYBACK
+endif
+
+ifeq ($(TARGET_BUILD_VARIANT),userdebug)
+ifneq (,$(filter racer%, $(TARGET_PRODUCT)))
+    EXTRA_CFLAGS += -DADSP_RESTART_DEBUG
+endif
+endif
+
+ifeq ($(CONFIG_KIEV_DTB), y)
+    CDEFINES += -DCONFIG_SND_SOC_AWINIC_AW882XX
+endif
+
+ifeq ($(CONFIG_NAIRO_DTB), y)
+    CDEFINES += -DCONFIG_SND_SOC_AWINIC_AW882XX
 endif
 
 ############ QDSP6V2 ############
