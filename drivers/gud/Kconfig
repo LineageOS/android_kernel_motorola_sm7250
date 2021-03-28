@@ -1,0 +1,31 @@
+#
+# Trustonic drivers configuration
+#
+
+config TRUSTONIC_TEE
+    tristate "Trustonic TEE Driver"
+    depends on ARM64
+    default n
+    ---help---
+      Enable Trustonic TEE support
+
+config TRUSTONIC_TEE_DEBUG
+    bool "Trustonic TEE driver debug mode"
+    depends on TRUSTONIC_TEE
+    default n
+    ---help---
+      Enable the debug mode in the Trustonic TEE Driver
+
+config RSU_SELECT_SILVER_CORES
+    bool "Force Trustonic TEE schedule run in silver cores"
+    depends on TRUSTONIC_TEE
+    default n
+    ---help---
+      Included logic to select silver CPU and clock mode based on device config
+
+config RSU_SELECT_INTERNAL_CLOCK
+    bool "Use internal clock for qcom_seecom"
+    depends on TRUSTONIC_TEE
+    default n
+    ---help---
+      Set for platforms that use internal clock for qcom_seecom
