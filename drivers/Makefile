@@ -186,6 +186,7 @@ obj-$(CONFIG_NVMEM)		+= nvmem/
 obj-$(CONFIG_FPGA)		+= fpga/
 obj-$(CONFIG_FSI)		+= fsi/
 obj-$(CONFIG_TEE)		+= tee/
+obj-$(CONFIG_TRUSTONIC_TEE)	+= gud/
 obj-$(CONFIG_MULTIPLEXER)	+= mux/
 obj-$(CONFIG_ESOC)              += esoc/
 obj-$(CONFIG_UNISYS_VISORBUS)	+= visorbus/

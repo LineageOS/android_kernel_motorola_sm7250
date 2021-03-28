@@ -246,4 +246,7 @@ source "drivers/watchdog_cpu_ctx/Kconfig"
 source "drivers/watchdogtest/Kconfig"
 
 source "drivers/mmi_relay/Kconfig"
+
+source "drivers/gud/Kconfig"
+
 endmenu
