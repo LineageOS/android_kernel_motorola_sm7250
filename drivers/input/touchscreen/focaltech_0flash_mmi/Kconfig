@@ -42,14 +42,6 @@ config INPUT_FOCALTECH_0FLASH_MMI_IC_NAME_FT8009
 	  Say Y here to enable support for Focaltech FT8009 touch panel.
 	  If unsure, say N.
 
-config TOUCHSCREEN_FTS_0FLASH_MMI_GESTURES
-	bool "Moto Focaltech Gestures"
-	depends on TOUCHSCREEN_FTS_0FLASH_MMI && INPUT_TOUCHSCREEN_MMI
-	default n
-	help
-	  Say Y here to enable support for Moto gestures functionality.
-	  If unsure, say N.
-
 config TOUCHSCREEN_FTS_0FLASH_MMI_ENABLE_DOUBLE_TAP
 	bool "Moto Focaltech Double tap"
 	depends on TOUCHSCREEN_FTS_0FLASH_MMI
