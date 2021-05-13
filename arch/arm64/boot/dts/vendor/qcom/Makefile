@@ -83,6 +83,9 @@ dtb-$(CONFIG_ARCH_LITO) += lito-rumi.dtb \
 endif
 endif
 
+ifeq ($(CONFIG_KIEV_DTB),y)
+dtb-$(CONFIG_ARCH_LAGOON) += lagoon.dtb
+else
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
 dtbo-$(CONFIG_ARCH_LAGOON) += \
 		lagoon-rumi-overlay.dtbo \
@@ -106,6 +109,7 @@ dtb-$(CONFIG_ARCH_LAGOON) += \
 		lagoon-cdp.dtb \
 		lagoon-atp.dtb \
 		lagoon-qrd.dtb
+endif
 endif
 
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)

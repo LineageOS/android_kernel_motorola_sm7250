@@ -13,6 +13,10 @@ ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
                 smith/lito-smith_06.dtbo \
                 smith/lito-smith_07.dtbo \
                 smith/lito-smith_08.dtbo
+
+		dtbo-$(CONFIG_KIEV_DTB) += \
+				kiev/lagoon-kiev_01.dtbo \
+				kiev/lagoon-kiev_02.dtbo
 endif
 
 always		:= $(dtb-y) $(dtbo-y)
