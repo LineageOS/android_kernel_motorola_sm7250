@@ -257,19 +257,34 @@ DTC ?= $(objtree)/scripts/dtc/dtc
 
 # Disable noisy checks by default
 ifeq ($(findstring 1,$(KBUILD_ENABLE_EXTRA_GCC_CHECKS)),)
-DTC_FLAGS += -Wno-unit_address_vs_reg \
-	-Wno-unit_address_format \
-	-Wno-avoid_unnecessary_addr_size \
-	-Wno-alias_paths \
-	-Wno-graph_child_address \
-	-Wno-graph_port \
-	-Wno-simple_bus_reg \
-	-Wno-unique_unit_address \
-	-Wno-pci_device_reg \
-	-Wno-avoid_default_addr_size \
-	-Wno-interrupts_property \
-	-Wno-reg_format \
-	-Wno-gpios_property
+	ifeq ($(DTC_PREBUILT),true)
+		DTC_FLAGS += \
+			-Wno-unit_address_vs_reg \
+			-Wno-avoid_default_addr_size \
+			-Wno-reg_format \
+			-Wno-status_is_string
+	else
+		DTC_FLAGS += \
+			-Wno-unit_address_format \
+			-Wno-unit_address_vs_reg \
+			-Wno-alias_paths \
+			-Wno-gpios_property \
+			-Wno-graph_child_address \
+			-Wno-graph_port \
+			-Wno-simple_bus_reg \
+			-Wno-unique_unit_address \
+			-Wno-pci_device_reg \
+			-Wno-avoid_default_addr_size \
+			-Wno-interrupts_property \
+			-Wno-clocks_property \
+			-Wno-clocks_property \
+			-Wno-cooling_device_property \
+			-Wno-io_channels_property \
+			-Wno-thermal_sensors_property \
+			-Wno-interrupts_extended_property \
+			-Wno-reg_format \
+			-Wno-gpios_property
+	endif
 endif
 
 ifneq ($(findstring 2,$(KBUILD_ENABLE_EXTRA_GCC_CHECKS)),)
@@ -315,6 +330,11 @@ $(obj)/%.dtb: $(src)/%.dts $(DTC) FORCE
 	$(call if_changed_dep,dtc)
 
 dtc-tmp = $(subst $(comma),_,$(dot-target).dts.tmp)
+
+# mkdtimg
+#----------------------------------------------------------------------------
+quiet_cmd_mkdtimg = DTBOIMG $@
+cmd_mkdtimg = mkdtboimg.py create $@ --page_size=4096 $(filter-out FORCE,$^)
 
 # cat
 # ---------------------------------------------------------------------------
