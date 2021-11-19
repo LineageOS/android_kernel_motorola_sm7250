@@ -16,6 +16,23 @@
       "message": "i prefer to split this change and keep google authorship for crypto edits\nalso on dts for channel ids just include our common file:  https://github.com/LineageOS/android_kernel_motorola_sm7250/blob/lineage-18.1/arch/arm64/boot/dts/vendor/moto/racer/lito-racer_01.dts#L3",
       "revId": "794be1ff47b77b4f9bee194195cfec967406627d",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f7a9e7f4_b762cf76",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2021-11-19T17:22:59Z",
+      "side": 1,
+      "message": "Oh derp, I accidentally added the dts. That\u0027s part of an attempt to make a proper dts including the qcom files and all. Dunno if I\u0027ll finish that or not. But didn\u0027t mean to upload that.",
+      "revId": "794be1ff47b77b4f9bee194195cfec967406627d",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
