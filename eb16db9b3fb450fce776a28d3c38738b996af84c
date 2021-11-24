@@ -16,6 +16,23 @@
       "message": "This presumably makes smith audio less broken, but sound still doesn\u0027t work.",
       "revId": "eb16db9b3fb450fce776a28d3c38738b996af84c",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "49c3e645_144e46b7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2021-11-24T18:58:24Z",
+      "side": 1,
+      "message": "This does make it possible for smith to make sound. There is still consistency issues, however. But this is still a step in the right direction.",
+      "revId": "eb16db9b3fb450fce776a28d3c38738b996af84c",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
