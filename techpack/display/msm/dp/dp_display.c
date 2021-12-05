@@ -1350,6 +1350,7 @@ static void dp_display_attention_work(struct work_struct *work)
 {
 	struct dp_display_private *dp = container_of(work,
 			struct dp_display_private, attention_work);
+	int rc = 0;
 
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state);
 	mutex_lock(&dp->session_lock);
@@ -1413,16 +1414,20 @@ static void dp_display_attention_work(struct work_struct *work)
 		if (dp->link->sink_request & DP_TEST_LINK_TRAINING) {
 			SDE_EVT32_EXTERNAL(dp->state, DP_TEST_LINK_TRAINING);
 			dp->link->send_test_response(dp->link);
-			dp->ctrl->link_maintenance(dp->ctrl);
+			rc = dp->ctrl->link_maintenance(dp->ctrl);
 		}
 
 		if (dp->link->sink_request & DP_LINK_STATUS_UPDATED) {
 			SDE_EVT32_EXTERNAL(dp->state, DP_LINK_STATUS_UPDATED);
-			dp->ctrl->link_maintenance(dp->ctrl);
+			rc = dp->ctrl->link_maintenance(dp->ctrl);
 		}
 
-		dp_audio_enable(dp, true);
+		if (!rc)
+			dp_audio_enable(dp, true);
+
 		mutex_unlock(&dp->session_lock);
+		if (rc)
+			goto end;
 
 		if (dp->link->sink_request & (DP_TEST_LINK_PHY_TEST_PATTERN |
 			DP_TEST_LINK_TRAINING))
@@ -1446,6 +1451,8 @@ cp_irq:
 
 mst_attention:
 	dp_display_mst_attention(dp);
+
+end:
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
 }
 
@@ -2630,14 +2637,13 @@ static int dp_display_init_aux_switch(struct dp_display_private *dp)
 	nb.notifier_call = dp_display_fsa4480_callback;
 	nb.priority = 0;
 
-	/* We don't use the fsa4480 on the 8250 baseline
 	rc = fsa4480_reg_notifier(&nb, dp->aux_switch_node);
 	if (rc) {
 		DP_ERR("failed to register notifier (%d)\n", rc);
 		goto end;
 	}
 
-	fsa4480_unreg_notifier(&nb, dp->aux_switch_node);*/
+	fsa4480_unreg_notifier(&nb, dp->aux_switch_node);
 end:
 	return rc;
 }

@@ -798,8 +798,10 @@ void sde_connector_update_fod_hbm(struct drm_connector *connector)
 	if (atomic_xchg(&effective_status, status) == status)
 		return;
 
+	mutex_lock(&display->panel->panel_lock);
 	if (!display->panel->hbm_state)
 		dsi_panel_set_fod_hbm(display->panel, status);
+	mutex_unlock(&display->panel->panel_lock);
 
 	dsi_display_set_fod_ui(display, status);
 	if (!status)
@@ -1554,6 +1556,22 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 		if (rc)
 			goto end;
 		break;
+	case CONNECTOR_PROP_DC:
+		param_info.value = val;
+		param_info.param_idx = PARAM_DC_ID;
+		param_info.param_conn_idx = CONNECTOR_PROP_DC;
+		rc = _sde_connector_update_param(c_conn, &param_info);
+		if (rc)
+			goto end;
+		break;
+	case CONNECTOR_PROP_COLOR:
+		param_info.value = val;
+		param_info.param_idx = PARAM_COLOR_ID;
+		param_info.param_conn_idx = CONNECTOR_PROP_COLOR;
+		rc = _sde_connector_update_param(c_conn, &param_info);
+		if (rc)
+			goto end;
+		break;
 	default:
 		break;
 	}
@@ -2243,8 +2261,6 @@ static int sde_connector_atomic_check(struct drm_connector *connector,
 		struct drm_connector_state *new_conn_state)
 {
 	struct sde_connector *c_conn;
-	struct sde_connector_state *c_state;
-	bool qsync_dirty = false, has_modeset = false;
 
 	if (!connector) {
 		SDE_ERROR("invalid connector\n");
@@ -2257,19 +2273,6 @@ static int sde_connector_atomic_check(struct drm_connector *connector,
 	}
 
 	c_conn = to_sde_connector(connector);
-	c_state = to_sde_connector_state(new_conn_state);
-
-	has_modeset = sde_crtc_atomic_check_has_modeset(new_conn_state->state,
-						new_conn_state->crtc);
-	qsync_dirty = msm_property_is_dirty(&c_conn->property_info,
-					&c_state->property_state,
-					CONNECTOR_PROP_QSYNC_MODE);
-
-	SDE_DEBUG("has_modeset %d qsync_dirty %d\n", has_modeset, qsync_dirty);
-	if (has_modeset && qsync_dirty) {
-		SDE_ERROR("invalid qsync update during modeset\n");
-		return -EINVAL;
-	}
 
 	if (c_conn->ops.atomic_check)
 		return c_conn->ops.atomic_check(connector,
@@ -2508,6 +2511,10 @@ static int sde_connector_install_panel_params(struct sde_connector *c_conn)
 			prop_idx = CONNECTOR_PROP_CABC;
 		else if (!strncmp(param_cmds->param_name, "ACL", 3))
 			prop_idx = CONNECTOR_PROP_ACL;
+		else if (!strncmp(param_cmds->param_name, "DC", 2))
+			prop_idx = CONNECTOR_PROP_DC;
+		else if (!strncmp(param_cmds->param_name, "COLOR", 5))
+			prop_idx = CONNECTOR_PROP_COLOR;
 		else {
 			SDE_ERROR("Invalid param_name =%s\n",
 						param_cmds->param_name);
