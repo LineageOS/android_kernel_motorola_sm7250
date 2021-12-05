@@ -207,6 +207,8 @@ enum msm_mdp_conn_property {
 	CONNECTOR_PROP_HBM,
 	CONNECTOR_PROP_CABC,
 	CONNECTOR_PROP_ACL,
+	CONNECTOR_PROP_DC,
+	CONNECTOR_PROP_COLOR,
 	/* total # of properties */
 	CONNECTOR_PROP_COUNT
 };
@@ -327,6 +329,8 @@ enum msm_param_id {
 	PARAM_HBM_ID = 0,
 	PARAM_CABC_ID,
 	PARAM_ACL_ID,
+	PARAM_DC_ID,
+	PARAM_COLOR_ID,
 	PARAM_ID_NUM
 };
 
@@ -544,6 +548,7 @@ struct msm_resource_caps_info {
  *				 used instead of panel TE in cmd mode panels
  * @roi_caps:           Region of interest capability info
  * @qsync_min_fps	Minimum fps supported by Qsync feature
+ * @has_qsync_min_fps_list True if dsi-supported-qsync-min-fps-list exits
  * @te_source		vsync source pin information
  */
 struct msm_display_info {
@@ -574,6 +579,8 @@ struct msm_display_info {
 	struct msm_roi_caps roi_caps;
 
 	uint32_t qsync_min_fps;
+	bool has_qsync_min_fps_list;
+
 	uint32_t te_source;
 };
 
