@@ -139,7 +139,7 @@ endif
 
 ifdef CONFIG_SND_SOC_LITO
 # Separate machine driver for Smith/Racer
-ifeq ($(CONFIG_SMITH_DTB), y)
+ifneq (,$(filter smith%, $(TARGET_PRODUCT)))
 	MACHINE_OBJS += kona-smith.o
 else
 	MACHINE_OBJS += kona.o
