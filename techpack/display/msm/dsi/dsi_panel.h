@@ -117,6 +117,13 @@ struct dsi_dfps_capabilities {
 	bool dfps_support;
 };
 
+struct dsi_qsync_capabilities {
+	/* qsync disabled if qsync_min_fps = 0 */
+	u32 qsync_min_fps;
+	u32 *qsync_min_fps_list;
+	int qsync_min_fps_list_len;
+};
+
 struct dsi_dyn_clk_caps {
 	bool dyn_clk_support;
 	u32 *bit_clk_list;
@@ -226,6 +233,20 @@ enum cabc_state {
 	CABC_STATE_NUM,
 };
 
+enum dc_state {
+	DC_OFF_STATE = 0,
+	DC_ON_STATE,
+	DC_STATE_NUM,
+};
+
+enum color_state {
+	COLOR_VBT_STATE = 0,
+	COLOR_STD_STATE,
+	COLOR_GAME_STATE,
+	COLOR_NONE_STATE,
+	COLOR_STATE_NUM,
+};
+
 struct panel_param_val_map {
 	int state;
 	enum dsi_cmd_set_type type;
@@ -295,7 +316,7 @@ struct dsi_panel {
 
 	bool panel_initialized;
 	bool te_using_watchdog_timer;
-	u32 qsync_min_fps;
+	struct dsi_qsync_capabilities qsync_caps;
 
 	char dsc_pps_cmd[DSI_CMD_PPS_SIZE];
 	enum dsi_dms_mode dms_mode;
