@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -1210,7 +1210,9 @@ static int __maybe_unused redriver_i2c_resume(struct device *dev)
 	dev_dbg(redriver->dev, "%s: SS USB redriver resume.\n",
 			__func__);
 
-	ssusb_redriver_gen_dev_set(redriver, true);
+	if (redriver->host_active &&
+	    redriver->op_mode == OP_MODE_USB_AND_DP)
+		ssusb_redriver_gen_dev_set(redriver, true);
 
 	flush_workqueue(redriver->redriver_wq);
 

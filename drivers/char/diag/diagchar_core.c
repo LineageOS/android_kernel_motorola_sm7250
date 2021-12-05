@@ -2400,6 +2400,8 @@ int diag_query_pd(char *process_name)
 		return PERIPHERAL_CDSP;
 	if (diag_query_pd_name(process_name, "npu/root_pd"))
 		return PERIPHERAL_NPU;
+	if (diag_query_pd_name(process_name, "wpss/root_pd"))
+		return PERIPHERAL_WCNSS;
 	if (diag_query_pd_name(process_name, "wlan_pd"))
 		return UPD_WLAN;
 	if (diag_query_pd_name(process_name, "audio_pd"))
@@ -3121,6 +3123,8 @@ long diagchar_ioctl(struct file *filp,
 		}
 		mutex_unlock(&driver->md_session_lock);
 		result = 0;
+	} else if (iocmd == DIAG_IOCTL_MD_SUPPORT_LIST) {
+		result = diagchar_ioctl_mdlog(filp, iocmd, ioarg);
 	} else {
 		result = -EINVAL;
 	}

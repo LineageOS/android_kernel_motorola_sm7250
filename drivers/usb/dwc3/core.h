@@ -780,6 +780,7 @@ struct dwc3_ep {
 	u8			resource_index;
 	u32			frame_number;
 	u32			interval;
+	u32			failedpkt_counter;
 
 	char			name[20];
 
@@ -1366,7 +1367,7 @@ struct dwc3 {
 	 * and core will power collapse. This also leads to reset-resume of
 	 * connected devices on PM resume.
 	 */
-	bool			host_poweroff_in_pm_suspend;
+	bool			ignore_wakeup_src_in_hostmode;
 	int			retries_on_error;
 	/*  If true, GDSC collapse will happen in HOST mode bus suspend */
 	bool			gdsc_collapse_in_host_suspend;

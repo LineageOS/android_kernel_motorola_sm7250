@@ -3,7 +3,7 @@
  * Copyright (c) 2015, Sony Mobile Communications, AB.
  */
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"WLED: %s: " fmt, __func__
@@ -90,6 +90,7 @@
 #define  WLED_SINK_REG_STR_MOD_EN	BIT(7)
 
 #define WLED_SINK_SYNC_DLY_REG(n)	(0x51 + (n * 0x10))
+#define  WLED_SINK_SYNC_DLY_MASK	GENMASK(2, 0)
 #define WLED_SINK_FS_CURR_REG(n)	(0x52 + (n * 0x10))
 #define  WLED_SINK_FS_MASK		GENMASK(3, 0)
 
@@ -208,6 +209,7 @@ struct wled_config {
 	int string_cfg;
 	int mod_sel;
 	int cabc_sel;
+	int sync_dly;
 	bool en_cabc;
 	bool ext_pfet_sc_pro_en;
 	bool auto_calib_enabled;
@@ -222,6 +224,7 @@ struct wled_flash_config {
 struct low_bl_config {
 	int low_bl_threshold;
 	int low_bl_remap_percent;
+	int low_bl_delay_ms;
 };
 
 struct bl_step_seq {
@@ -397,15 +400,13 @@ static int wled_sync_toggle(struct wled *wled)
 
 	rc = regmap_update_bits(wled->regmap,
 			wled->sink_addr + WLED_SINK_SYNC,
-			WLED_SINK_SYNC_MASK, WLED_SINK_SYNC_MASK);
+			WLED_SINK_SYNC_MASK, WLED_SINK_SYNC_CLEAR);
 	if (rc < 0)
 		return rc;
 
-	rc = regmap_update_bits(wled->regmap,
+	return regmap_update_bits(wled->regmap,
 			wled->sink_addr + WLED_SINK_SYNC,
-			WLED_SINK_SYNC_MASK, WLED_SINK_SYNC_CLEAR);
-
-	return rc;
+			WLED_SINK_SYNC_MASK, WLED_SINK_SYNC_MASK);
 }
 
 static int wled5_sample_hold_control(struct wled *wled, u16 brightness,
@@ -479,20 +480,19 @@ static int wled5_set_brightness(struct wled *wled, u16 brightness)
 	if (rc < 0)
 		return rc;
 
-	/* Update brightness values to modulator in WLED5 */
-	val = (wled->cfg.mod_sel == MOD_A) ? WLED5_SINK_SYNC_MODA_BIT :
-		WLED5_SINK_SYNC_MODB_BIT;
-	rc = regmap_update_bits(wled->regmap,
-			wled->sink_addr + WLED5_SINK_MOD_SYNC_BIT_REG,
-			WLED5_SINK_SYNC_MASK, val);
-	if (rc < 0)
-		return rc;
-
 	val = 0;
 	rc = regmap_update_bits(wled->regmap,
 			wled->sink_addr + WLED5_SINK_MOD_SYNC_BIT_REG,
 			WLED_SINK_SYNC_MASK, val);
-	return rc;
+	/* Update brightness values to modulator in WLED5 */
+	if (rc < 0)
+		return rc;
+
+	val = (wled->cfg.mod_sel == MOD_A) ? WLED5_SINK_SYNC_MODA_BIT :
+		WLED5_SINK_SYNC_MODB_BIT;
+	return regmap_update_bits(wled->regmap,
+			wled->sink_addr + WLED5_SINK_MOD_SYNC_BIT_REG,
+			WLED5_SINK_SYNC_MASK, val);
 }
 
 static int wled4_set_brightness(struct wled *wled, u16 brightness)
@@ -542,8 +542,8 @@ static int wled_update_status(struct backlight_device *bl)
 
 	mutex_lock(&wled->lock);
 	if (brightness) {
-		if (wled->low_bl_force_cabc_disable) {
-			if (brightness < wled->low_bl_cfg.low_bl_threshold) {
+		if (wled->low_bl_force_cabc_disable && wled->brightness) {
+			if (brightness <= wled->low_bl_cfg.low_bl_threshold) {
 				brightness = brightness * wled->low_bl_cfg.low_bl_remap_percent/100;
 				if (!wled->cabc_disabled) {
 					wled->cabc_config(wled, false);
@@ -552,7 +552,7 @@ static int wled_update_status(struct backlight_device *bl)
 				}
 
 			}
-			else if ((wled->brightness < wled->low_bl_cfg.low_bl_threshold) && (wled->cabc_disabled)){
+			else if ((wled->brightness < wled->low_bl_cfg.low_bl_threshold) && (wled->cabc_disabled)) {
 				wled->cabc_disabled = false;
 				wled->cabc_config(wled, true);
 				pr_info("exit low brightness(%d), will enable cabc\n", brightness);
@@ -604,11 +604,15 @@ static int wled_update_status(struct backlight_device *bl)
 		}
 
 		rc = wled_set_brightness(wled, brightness);
-		if (wled->cabc_disabled && wled->sleep_cabc_disable) {
-			msleep(50);
-			wled->cabc_disabled = false;
-			wled->cabc_config(wled, true);
-			pr_info("enable wled cabc\n");
+		if (wled->cabc_disabled && wled->low_bl_force_cabc_disable && !wled->brightness) {
+			if (brightness <= wled->low_bl_cfg.low_bl_threshold)
+				pr_info("keep cabc disabled\n");
+			else {
+				msleep(wled->low_bl_cfg.low_bl_delay_ms);
+				wled->cabc_disabled = false;
+				wled->cabc_config(wled, true);
+				pr_info("enable wled cabc\n");
+			}
 		}
 		if (rc < 0) {
 			pr_err("wled failed to set brightness rc:%d\n", rc);
@@ -641,7 +645,7 @@ static int wled_update_status(struct backlight_device *bl)
 			}
 		}
 	} else {
-		if (!wled->cabc_disabled && wled->sleep_cabc_disable) {
+		if (!wled->cabc_disabled && wled->low_bl_force_cabc_disable) {
 			wled->cabc_config(wled, false);
 			wled->cabc_disabled = true;
 			pr_info("disable wled cabc\n");
@@ -1208,10 +1212,14 @@ static int parse_low_bl_config(struct wled *wled)
 		of_property_read_u32(dev->of_node, "mmi,low-bl-remap-percent", &val);
 		wled->low_bl_cfg.low_bl_remap_percent = val;
 
-		pr_info(" low-bl-force-cabc-disbale enabled, low-bl-threshold %d low-bl-remap_percent %d\n",
-				wled->low_bl_cfg.low_bl_threshold, wled->low_bl_cfg.low_bl_remap_percent);
-		wled->cabc_disabled = false;
+		val = 0;
+		of_property_read_u32(dev->of_node, "mmi,low-bl-delay-ms", &val);
+		wled->low_bl_cfg.low_bl_delay_ms = val;
 
+		pr_info(" low-bl-force-cabc-disbale enabled, low-bl-threshold %d low-bl-remap_percent %d low_bl_delay_ms %d\n",
+				wled->low_bl_cfg.low_bl_threshold, wled->low_bl_cfg.low_bl_remap_percent, wled->low_bl_cfg.low_bl_delay_ms);
+
+		wled->cabc_disabled = false;
 	}
 	return  0;
 }
@@ -1404,6 +1412,14 @@ static int wled4_setup(struct wled *wled)
 			if (rc < 0)
 				return rc;
 
+			addr = wled->sink_addr +
+					WLED_SINK_SYNC_DLY_REG(i);
+			rc = regmap_update_bits(wled->regmap, addr,
+						WLED_SINK_SYNC_DLY_MASK,
+						wled->cfg.sync_dly);
+			if (rc < 0)
+				return rc;
+
 			temp = i + WLED_SINK_CURR_SINK_SHFT;
 			sink_en |= 1 << temp;
 		}
@@ -1488,6 +1504,7 @@ static const struct wled_config wled4_config_defaults = {
 	.fs_current = 10,
 	.ovp = 1,
 	.switch_freq = 11,
+	.sync_dly = 2,
 	.string_cfg = 0xf,
 	.mod_sel = -EINVAL,
 	.cabc_sel = -EINVAL,
@@ -1551,6 +1568,15 @@ static const u32 wled4_ovp_values[] = {
 static const struct wled_var_cfg wled4_ovp_cfg = {
 	.values = wled4_ovp_values,
 	.size = ARRAY_SIZE(wled4_ovp_values),
+};
+
+static const u32 wled4_sync_dly_values[] = {
+	0, 200, 400, 600, 800, 1000, 1200, 1400,
+};
+
+static const struct wled_var_cfg wled4_sync_dly_cfg = {
+	.values = wled4_sync_dly_values,
+	.size = ARRAY_SIZE(wled4_sync_dly_values),
 };
 
 static inline u32 wled5_ovp_values_fn(u32 idx)
@@ -2269,6 +2295,11 @@ static int wled_configure(struct wled *wled, struct device *dev)
 			.name = "qcom,string-cfg",
 			.val_ptr = &cfg->string_cfg,
 			.cfg = &wled_string_cfg,
+		},
+		{
+			.name = "qcom,sync-dly",
+			.val_ptr = &cfg->sync_dly,
+			.cfg = &wled4_sync_dly_cfg,
 		},
 	};
 

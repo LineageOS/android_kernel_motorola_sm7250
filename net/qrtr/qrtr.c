@@ -1361,9 +1361,9 @@ static int qrtr_port_assign(struct qrtr_sock *ipc, int *port)
 		if (rc >= 0)
 			*port = rc;
 	} else if (*port < QRTR_MIN_EPH_SOCKET &&
-		   !(capable(CAP_NET_ADMIN) ||
-		   in_egroup_p(AID_VENDOR_QRTR) ||
-		   in_egroup_p(GLOBAL_ROOT_GID))) {
+			!(capable(CAP_NET_ADMIN) ||
+				in_egroup_p(AID_VENDOR_QRTR) ||
+				in_egroup_p(GLOBAL_ROOT_GID))) {
 		rc = -EACCES;
 	} else if (*port == QRTR_PORT_CTRL) {
 		rc = idr_alloc(&qrtr_ports, ipc, 0, 1, GFP_ATOMIC);
@@ -1723,6 +1723,7 @@ static int qrtr_recvmsg(struct socket *sock, struct msghdr *msg,
 
 	if (sock_flag(sk, SOCK_ZAPPED)) {
 		release_sock(sk);
+		pr_err("%s: Invalid addr error\n", __func__);
 		return -EADDRNOTAVAIL;
 	}
 
@@ -1741,8 +1742,10 @@ static int qrtr_recvmsg(struct socket *sock, struct msghdr *msg,
 	}
 
 	rc = skb_copy_datagram_msg(skb, 0, msg, copied);
-	if (rc < 0)
+	if (rc < 0) {
+		pr_err("%s: Failed to copy skb rc[%d]\n", __func__, rc);
 		goto out;
+	}
 	rc = copied;
 
 	if (addr) {
