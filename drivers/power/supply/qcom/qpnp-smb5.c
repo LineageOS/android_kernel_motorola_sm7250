@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/debugfs.h>
@@ -492,6 +492,9 @@ static int smb5_parse_dt_misc(struct smb5 *chip, struct device_node *node)
 	chg->sw_jeita_enabled = of_property_read_bool(node,
 				"qcom,sw-jeita-enable");
 
+	chg->jeita_arb_enable = of_property_read_bool(node,
+				"qcom,jeita-arb-enable");
+
 	chg->pd_not_supported = chg->pd_not_supported ||
 			of_property_read_bool(node, "qcom,usb-pd-disable");
 
@@ -645,6 +648,14 @@ static int smb5_parse_dt_misc(struct smb5 *chip, struct device_node *node)
 
 	chg->hvdcp2_current_override = of_property_read_bool(node,
 					"qcom,hvdcp2-current-override");
+
+#ifdef CONFIG_QC3P_PUMP_SUPPORT
+	chg->mmi_qc3p_support = of_property_read_bool(node, "mmi,qc3p-support");
+	pr_err("mmi_qc3p_support:%d\n",chg->mmi_qc3p_support);
+#endif
+
+	chg->afvc_enable = of_property_read_bool(node, "qcom,afvc_enable");
+	pr_info("afvc_enable:%d\n",chg->afvc_enable);
 
 	return 0;
 }
@@ -954,6 +965,9 @@ static enum power_supply_property smb5_usb_props[] = {
 	POWER_SUPPLY_PROP_CHARGER_STATUS,
 	POWER_SUPPLY_PROP_INPUT_VOLTAGE_SETTLED,
 	POWER_SUPPLY_PROP_MOISTURE_DETECTION_ENABLE,
+#ifdef CONFIG_QC3P_PUMP_SUPPORT
+	POWER_SUPPLY_PROP_HVDCP_POWER,
+#endif
 };
 
 static int smb5_usb_get_prop(struct power_supply *psy,
@@ -1125,6 +1139,13 @@ static int smb5_usb_get_prop(struct power_supply *psy,
 				val->intval = (buff[1] << 8 | buff[0]) * 1038;
 		}
 		break;
+#ifdef CONFIG_QC3P_PUMP_SUPPORT
+	case POWER_SUPPLY_PROP_HVDCP_POWER:
+		if( chg->qc3p_power <QC3P_POWER_NONE || chg->qc3p_power > QC3P_POWER_45W )
+			chg->qc3p_power = QC3P_POWER_NONE;
+		val->intval = chg->qc3p_power;
+		break;
+#endif
 	default:
 		pr_err("get prop %d is not supported in usb\n", psp);
 		rc = -EINVAL;
@@ -1833,6 +1854,10 @@ static enum power_supply_property smb5_batt_props[] = {
 	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
 	POWER_SUPPLY_PROP_TIME_TO_FULL_NOW,
 	POWER_SUPPLY_PROP_FCC_STEPPER_ENABLE,
+	POWER_SUPPLY_PROP_BATTERY_CHARGING_ENABLED,
+#ifdef CONFIG_QC3P_PUMP_SUPPORT
+	POWER_SUPPLY_PROP_QC3P_AICL_THRESHOLD,
+#endif
 };
 
 #define DEBUG_ACCESSORY_TEMP_DECIDEGC	250
@@ -1985,6 +2010,14 @@ static int smb5_batt_get_prop(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_FCC_STEPPER_ENABLE:
 		val->intval = chg->fcc_stepper_enable;
 		break;
+	case POWER_SUPPLY_PROP_BATTERY_CHARGING_ENABLED:
+		val->intval = !get_effective_result(chg->chg_disable_votable);
+		break;
+#ifdef CONFIG_QC3P_PUMP_SUPPORT
+	case POWER_SUPPLY_PROP_QC3P_AICL_THRESHOLD:
+		smblib_get_charge_param(chg, &chg->param.aicl_cont_threshold, &val->intval);
+		break;
+#endif
 	default:
 		pr_err("batt power supply prop %d not supported\n", psp);
 		return -EINVAL;
@@ -2063,12 +2096,41 @@ static int smb5_batt_set_prop(struct power_supply *psy,
 				POWER_SUPPLY_PROP_SET_SHIP_MODE, val);
 		rc = smblib_set_prop_ship_mode(chg, val);
 		break;
+	case POWER_SUPPLY_PROP_CURRENT_MAX:
+		if (val->intval < 0) {
+			vote(chg->fcc_votable, MMI_VOTER, false, 0);
+		} else
+			vote(chg->fcc_votable, MMI_VOTER, true, val->intval);
+		break;
+#ifdef CONFIG_QC3P_PUMP_SUPPORT
+	case POWER_SUPPLY_PROP_QC3P_CURRENT_MAX:
+		if (val->intval < 0) {
+			vote(chg->fcc_votable, MMI_QC3P_VOTER, false, 0);
+		} else{
+			vote(chg->fcc_votable, MMI_QC3P_VOTER, true, val->intval);
+		}
+		break;
+	case POWER_SUPPLY_PROP_QC3P_AICL_THRESHOLD:
+		if (val->intval > 0) {
+			smblib_set_charge_param(chg, &chg->param.aicl_cont_threshold, val->intval);
+		}
+		break;
+#endif
 	case POWER_SUPPLY_PROP_RERUN_AICL:
 		rc = smblib_run_aicl(chg, RERUN_AICL);
 		break;
 	case POWER_SUPPLY_PROP_DP_DM:
+#ifdef CONFIG_QC3P_PUMP_SUPPORT
+		if (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_HVDCP_3P5)
+			rc = smblib_dp_dm(chg, val->intval);
+		else if ((!chg->flash_active)
+			&& (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_HVDCP_3
+			     &&!chg->mmi_is_qc3p_authen))
+			rc = smblib_dp_dm(chg, val->intval);
+#else
 		if (!chg->flash_active)
 			rc = smblib_dp_dm(chg, val->intval);
+#endif
 		break;
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMITED:
 		rc = smblib_set_prop_input_current_limited(chg, val);
@@ -2093,6 +2155,9 @@ static int smb5_batt_set_prop(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_FCC_STEPPER_ENABLE:
 		chg->fcc_stepper_enable = val->intval;
 		break;
+	case POWER_SUPPLY_PROP_BATTERY_CHARGING_ENABLED:
+		vote(chg->chg_disable_votable, USER_VOTER, !!!val->intval, 0);
+		break;
 	default:
 		rc = -EINVAL;
 	}
@@ -2113,7 +2178,11 @@ static int smb5_batt_prop_is_writeable(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_RERUN_AICL:
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMITED:
 	case POWER_SUPPLY_PROP_STEP_CHARGING_ENABLED:
+	case POWER_SUPPLY_PROP_BATTERY_CHARGING_ENABLED:
 	case POWER_SUPPLY_PROP_DIE_HEALTH:
+#ifdef CONFIG_QC3P_PUMP_SUPPORT
+	case POWER_SUPPLY_PROP_QC3P_AICL_THRESHOLD:
+#endif
 		return 1;
 	default:
 		break;
@@ -2147,7 +2216,6 @@ static int smb5_init_batt_psy(struct smb5 *chip)
 		pr_err("Couldn't register battery power supply\n");
 		return PTR_ERR(chg->batt_psy);
 	}
-
 	return rc;
 }
 
@@ -2257,16 +2325,13 @@ static int smb5_configure_typec(struct smb_charger *chg)
 	}
 
 	/*
-	 * Across reboot, standard typeC cables get detected as legacy cables
-	 * due to VBUS attachment prior to CC attach/dettach. To handle this,
-	 * "early_usb_attach" flag is used, which assumes that across reboot,
-	 * the cable connected can be standard typeC. However, its jurisdiction
-	 * is limited to PD capable designs only. Hence, for non-PD type designs
-	 * reset legacy cable detection by disabling/enabling typeC mode.
+	 * Across reboot, standard typeC cables get detected as legacy
+	 * cables due to VBUS attachment prior to CC attach/detach. Reset
+	 * the legacy detection logic by enabling/disabling the typeC mode.
 	 */
-	if (chg->pd_not_supported && (val & TYPEC_LEGACY_CABLE_STATUS_BIT)) {
+	if (val & TYPEC_LEGACY_CABLE_STATUS_BIT) {
 		pval.intval = POWER_SUPPLY_TYPEC_PR_NONE;
-		smblib_set_prop_typec_power_role(chg, &pval);
+		rc = smblib_set_prop_typec_power_role(chg, &pval);
 		if (rc < 0) {
 			dev_err(chg->dev, "Couldn't disable TYPEC rc=%d\n", rc);
 			return rc;
@@ -2276,7 +2341,7 @@ static int smb5_configure_typec(struct smb_charger *chg)
 		msleep(50);
 
 		pval.intval = POWER_SUPPLY_TYPEC_PR_DUAL;
-		smblib_set_prop_typec_power_role(chg, &pval);
+		rc = smblib_set_prop_typec_power_role(chg, &pval);
 		if (rc < 0) {
 			dev_err(chg->dev, "Couldn't enable TYPEC rc=%d\n", rc);
 			return rc;
@@ -3075,6 +3140,16 @@ static int smb5_init_hw(struct smb5 *chip)
 			dev_err(chg->dev,
 				"Couldn't configure SMB pull-up rc=%d\n",
 				rc);
+			return rc;
+		}
+	}
+
+	if(chg->afvc_enable) {
+		//set comp resistance 20mOum
+		rc = smblib_masked_write(chg, 0x118b, 0xff, 0xa);
+		if (rc < 0) {
+			dev_err(chg->dev,
+				"Couldn't configure AFVC rc=%d\n", rc);
 			return rc;
 		}
 	}

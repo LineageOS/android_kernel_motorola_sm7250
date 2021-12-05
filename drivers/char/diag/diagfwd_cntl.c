@@ -20,7 +20,7 @@
 
 #define FEATURE_SUPPORTED(x)	((feature_mask << (i * 8)) & (1 << x))
 #define DIAG_GET_MD_DEVICE_SIG_MASK(proc) (0x100000 * (1 << proc))
-uint16_t md_support;
+uint16_t md_support = 0;
 /* tracks which peripheral is undergoing SSR */
 static uint16_t reg_dirty[NUM_PERIPHERALS];
 static uint8_t diag_id = DIAG_ID_APPS;
@@ -106,11 +106,19 @@ void diag_notify_md_client(uint8_t proc, uint8_t peripheral, int data)
 	struct pid *pid_struct;
 	struct task_struct *result;
 
-	if (data == DIAG_STATUS_OPEN) {
-		md_support |= PERIPHERAL_MASK(peripheral);
-	} else if (data == DIAG_STATUS_CLOSED) {
-		md_support ^= PERIPHERAL_MASK(peripheral);
+	// Moto huangzq2: ignore mdm2 for md_support because mdm2 has same peripheral may
+	// override mdm's md_support state.
+	if (peripheral != 0 || proc != 2 /*BRIDGE_TO_MUX(DIAGFWD_MDM2)*/ ) {
+		if (data == DIAG_STATUS_OPEN) {
+			md_support |= PERIPHERAL_MASK(peripheral);
+		} else if (data == DIAG_STATUS_CLOSED) {
+			if((md_support & PERIPHERAL_MASK(peripheral)) == PERIPHERAL_MASK(peripheral))
+			{
+				md_support ^= PERIPHERAL_MASK(peripheral);
+			}
+		}
 	}
+
 	if (peripheral > NUM_PERIPHERALS)
 		return;
 
@@ -892,8 +900,11 @@ static void process_diagid(uint8_t *buf, uint32_t len,
 		diag_id++;
 		new_request = 1;
 		pd_val = diag_query_pd(process_name);
-		if (pd_val < 0)
+		if (pd_val < 0) {
+			pr_err("diag: diagid request string: %s does not exist in the database\n",
+			process_name);
 			return;
+		}
 		diag_add_diag_id_to_list(diag_id, process_name,
 			pd_val, peripheral);
 		if (diagid_v2_feature_mask) {

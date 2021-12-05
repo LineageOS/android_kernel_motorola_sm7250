@@ -51,6 +51,14 @@ config KIEV_DTB
 	Only include KIEV specific DTBs to limit the number that
 	get built during kernel compilation.
 
+config PSTAR_DTB
+	depends on ARCH_QCOM
+	default n
+	bool "PSTAR DTBs"
+	help
+	Only include PSTAR specific DTBs to limit the number that
+	get built during kernel compilation.
+
 config BERLIN_DTB
 	depends on ARCH_QCOM
 	default n
@@ -58,6 +66,22 @@ config BERLIN_DTB
 	help
 	Only include BERLIN specific DTBs to limit the number that
 	get built during kernel compilation.
+
+config BERLNA_DTB
+	depends on ARCH_QCOM
+	default n
+	bool "BERLNA DTBs"
+	help
+	Only include BERLNA specific DTBs to limit the number that
+	get built during kernel compilation.
+
+config KIEVV_DTB
+        depends on ARCH_QCOM
+        default n
+        bool "KIEVV DTBs"
+        help
+        Only include KIEVV specific DTBs to limit the number that
+        get built during kernel compilation
 
 config KYOTO_DTB
 	depends on ARCH_QCOM
@@ -471,7 +495,7 @@ config MSM_REMOTEQDSS
 	  /sys/class/remoteqdss.
 
 config MSM_TZ_SMMU
-	depends on ARCH_MSM8953 || ARCH_QCS405
+	depends on ARCH_MSM8953 || ARCH_QCS405 || ARCH_MSM8917 || ARCH_MSM8937
 	bool "Helper functions for SMMU configuration through TZ"
 	help
 	  Say 'Y' here for targets that need to call into TZ to configure
@@ -652,6 +676,15 @@ config QCOM_FSA4480_I2C
 	  using I2C. This driver provides common support
 	  for accessing the device, switching between USB and Audio
 	  modes, changing orientation.
+
+config QCOM_FSA4480_LPD
+	bool "Fairchild FSA4480 chip with I2C LPD"
+	select REGMAP_I2C
+	depends on I2C
+	help
+	  Support for the Fairchild FSA4480 IC LPD detection function controlled
+	  using I2C. This driver provides common support of resistance detection
+	  for accessing the device
 
 config QCOM_WATCHDOG_V2
 	bool "QTI Watchdog Support"
@@ -968,6 +1001,16 @@ config QTI_CRYPTO_TZ
 	 performing hardware based file encryption. This means keys are
 	 programmed and managed through SCM calls to TZ where ICE driver
 	 will configure keys.
+
+config MSM_BAM_DMUX
+	bool "BAM Data Mux Driver"
+	depends on SPS
+	help
+	 Support Muxed Data Channels over BAM interface.
+	 BAM has a limited number of pipes.  This driver
+	 provides a means to support more logical channels
+	 via muxing than BAM could without muxing.
+
 endmenu
 
 config QCOM_HYP_CORE_CTL
@@ -1017,3 +1060,5 @@ config ICNSS_QMI
 	  handshake messages to WLAN FW, which includes hardware capabilities
 	  and configurations. It also send WLAN on/off control message to FW
 	  over QMI channel.
+
+source "drivers/soc/qcom/wcnss/Kconfig"
