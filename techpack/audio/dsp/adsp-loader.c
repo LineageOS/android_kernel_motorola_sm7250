@@ -193,6 +193,9 @@ static ssize_t adsp_ssr_store(struct kobject *kobj,
 
 	dev_err(&pdev->dev, "requesting for ADSP restart\n");
 
+#if defined(ADSP_RESTART_DEBUG)
+	panic("%s: panic for getting ramdump in userdebug release", __func__);
+#endif
 	/* subsystem_restart_dev has worker queue to handle */
 	rc = subsystem_restart_dev(adsp_dev);
 	if (rc) {
@@ -359,7 +362,7 @@ static int adsp_loader_probe(struct platform_device *pdev)
 					  &adsp_fuse_not_supported);
 		if (ret) {
 			dev_dbg(&pdev->dev,
-				"%s: adsp_fuse_not_supported prop not found",
+				"%s: adsp_fuse_not_supported prop not found %d\n",
 				__func__, ret);
 			goto wqueue;
 		}
