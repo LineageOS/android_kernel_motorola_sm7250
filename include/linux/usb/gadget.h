@@ -340,6 +340,7 @@ struct usb_ep {
 	unsigned		max_streams:16;
 	unsigned		mult:2;
 	unsigned		maxburst:5;
+	unsigned		txfifo_hint:5;
 	u8			address;
 	const struct usb_endpoint_descriptor	*desc;
 	const struct usb_ss_ep_comp_descriptor	*comp_desc;
@@ -543,6 +544,11 @@ struct usb_gadget {
 	unsigned			connected:1;
 	unsigned			lpm_capable:1;
 	unsigned			remote_wakeup:1;
+	bool				bam2bam_func_enabled;
+	u32				extra_buf_alloc;
+	bool				l1_supported;
+	bool				is_chipidea;
+	bool				self_powered;
 
 	ANDROID_KABI_RESERVE(1);
 	ANDROID_KABI_RESERVE(2);

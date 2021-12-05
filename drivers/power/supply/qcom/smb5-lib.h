@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SMB5_CHARGER_H
@@ -47,6 +47,9 @@ enum print_reason {
 #define PL_DELAY_VOTER			"PL_DELAY_VOTER"
 #define CTM_VOTER			"CTM_VOTER"
 #define SW_QC3_VOTER			"SW_QC3_VOTER"
+#ifdef CONFIG_QC3P_PUMP_SUPPORT
+#define SW_QC3P_AUTHEN_VOTER		"SW_QC3P_AUTHEN_VOTER"
+#endif
 #define AICL_RERUN_VOTER		"AICL_RERUN_VOTER"
 #define SW_ICL_MAX_VOTER		"SW_ICL_MAX_VOTER"
 #define PL_QNOVO_VOTER			"PL_QNOVO_VOTER"
@@ -85,7 +88,14 @@ enum print_reason {
 
 #define BOOST_BACK_STORM_COUNT	3
 #define WEAK_CHG_STORM_COUNT	8
-
+#define HEARTBEAT_VOTER			"HEARTBEAT_VOTER"
+#define EB_VOTER			"EB_VOTER"
+#define WIRELESS_VOTER			"WIRELESS_VOTER"
+#define DEMO_VOTER			"DEMO_VOTER"
+#define MMI_VOTER			"MMI_VOTER"
+#ifdef CONFIG_QC3P_PUMP_SUPPORT
+#define MMI_QC3P_VOTER			"MMI_QC3P_VOTER"
+#endif
 #define VBAT_TO_VRAW_ADC(v)		div_u64((u64)v * 1000000UL, 194637UL)
 
 #define ITERM_LIMITS_PMI632_MA		5000
@@ -106,7 +116,25 @@ enum print_reason {
 #define DCIN_ICL_MAX_UA			1500000
 #define DCIN_ICL_STEP_UA		100000
 #define ROLE_REVERSAL_DELAY_MS		500
+#ifdef CONFIG_QC3P_PUMP_SUPPORT
+enum qc3p_authen_stage {
+	/* initial stage */
+	QC3P_AUTHEN_STAGE_NONE,
+	/* started and ongoing */
+	QC3P_AUTHEN_STAGE_START,
+	/* cancel if started,  or don't start */
+	QC3P_AUTHEN_STAGE_CANCEL,
+	/* confirmed and mitigation measures taken for 60 s */
+	QC3P_AUTHEN_STAGE_COMMIT,
+};
 
+enum qc3p_power {
+	QC3P_POWER_NONE,
+	QC3P_POWER_18W,
+	QC3P_POWER_27W,
+	QC3P_POWER_45W,
+};
+#endif
 enum smb_mode {
 	PARALLEL_MASTER = 0,
 	PARALLEL_SLAVE,
@@ -474,7 +502,15 @@ struct smb_charger {
 	struct delayed_work	pr_swap_detach_work;
 	struct delayed_work	pr_lock_clear_work;
 	struct delayed_work	role_reversal_check;
-
+#ifdef CONFIG_QC3P_PUMP_SUPPORT
+ 	struct task_struct		*mmi_qc3p_authen_task;
+	wait_queue_head_t		mmi_timer_wait_que;
+	bool					mmi_is_qc3p_authen;
+	bool					mmi_timer_trig_flag;
+ 	enum qc3p_power		qc3p_power;
+	bool					mmi_qc3p_support;
+	bool					mmi_qc3p_rerun_done;
+#endif
 	struct alarm		lpd_recheck_timer;
 	struct alarm		moisture_protection_alarm;
 	struct alarm		chg_termination_alarm;
@@ -514,6 +550,7 @@ struct smb_charger {
 	int			fake_batt_status;
 	bool			step_chg_enabled;
 	bool			sw_jeita_enabled;
+	bool			jeita_arb_enable;
 	bool			typec_legacy_use_rp_icl;
 	bool			is_hdc;
 	bool			chg_done;
@@ -637,8 +674,11 @@ struct smb_charger {
 #ifndef QCOM_BASE
 	u32			lpd_retry_count;
 #endif
+	bool			cp_active;
+	bool			afvc_enable;
 };
-
+void smblib_set_prop_cp_enable(struct smb_charger *chg,
+				const union power_supply_propval *val);
 int smblib_read(struct smb_charger *chg, u16 addr, u8 *val);
 int smblib_masked_write(struct smb_charger *chg, u16 addr, u8 mask, u8 val);
 int smblib_write(struct smb_charger *chg, u16 addr, u8 val);

@@ -1342,11 +1342,8 @@ void sdhci_msm_enter_dbg_mode(struct sdhci_host *host)
 	struct sdhci_msm_host *msm_host = pltfm_host->priv;
 	struct platform_device *pdev = msm_host->pdev;
 	u32 enable_dbg_feature = 0;
-	u32 minor;
 
-	minor = IPCAT_MINOR_MASK(readl_relaxed(host->ioaddr +
-				SDCC_IP_CATALOG));
-	if (minor < 2 || msm_host->debug_mode_enabled)
+	if (msm_host->minor < 2 || msm_host->debug_mode_enabled)
 		return;
 	if (!(host->quirks2 & SDHCI_QUIRK2_USE_DBG_FEATURE))
 		return;
@@ -1360,7 +1357,7 @@ void sdhci_msm_enter_dbg_mode(struct sdhci_host *host)
 			SDCC_TESTBUS_CONFIG) | TESTBUS_EN),
 			host->ioaddr + SDCC_TESTBUS_CONFIG);
 
-	if (minor >= 2)
+	if (msm_host->minor >= 2)
 		enable_dbg_feature |= FSM_HISTORY |
 			AUTO_RECOVERY_DISABLE |
 			MM_TRIGGER_DISABLE |
@@ -1387,11 +1384,8 @@ void sdhci_msm_exit_dbg_mode(struct sdhci_host *host)
 	struct sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
 	struct sdhci_msm_host *msm_host = pltfm_host->priv;
 	struct platform_device *pdev = msm_host->pdev;
-	u32 minor;
 
-	minor = IPCAT_MINOR_MASK(readl_relaxed(host->ioaddr +
-				SDCC_IP_CATALOG));
-	if (minor < 2 || !msm_host->debug_mode_enabled)
+	if (msm_host->minor  < 2 || !msm_host->debug_mode_enabled)
 		return;
 	if (!(host->quirks2 & SDHCI_QUIRK2_USE_DBG_FEATURE))
 		return;
@@ -1412,7 +1406,7 @@ void sdhci_msm_exit_dbg_mode(struct sdhci_host *host)
 int sdhci_msm_execute_tuning(struct sdhci_host *host, u32 opcode)
 {
 	unsigned long flags;
-	int tuning_seq_cnt = 3;
+	int tuning_seq_cnt = 10;
 	u8 phase, *data_buf, tuned_phases[NUM_TUNING_PHASES], tuned_phase_cnt;
 	const u32 *tuning_block_pattern = tuning_block_64;
 	int size = sizeof(tuning_block_64); /* Tuning pattern size in bytes */
@@ -1615,6 +1609,22 @@ retry:
 		sdhci_msm_set_mmc_drv_type(host, opcode, 0);
 
 	if (tuned_phase_cnt) {
+		if (tuned_phase_cnt == ARRAY_SIZE(tuned_phases)) {
+			/*
+			 * All phases valid is _almost_ as bad as no phases
+			 * valid.  Probably all phases are not really reliable
+			 * but we didn't detect where the unreliable place is.
+			 * That means we'll essentially be guessing and hoping
+			 * we get a good phase.  Better to try a few times.
+			 */
+			dev_dbg(mmc_dev(mmc), "%s: All phases valid; try again\n",
+				mmc_hostname(mmc));
+			if (--tuning_seq_cnt) {
+				tuned_phase_cnt = 0;
+				goto retry;
+			}
+		}
+
 		rc = msm_find_most_appropriate_phase(host, tuned_phases,
 							tuned_phase_cnt);
 		if (rc < 0)
@@ -5277,7 +5287,6 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 	void __iomem *tlmm_mem;
 	unsigned long flags;
 	bool force_probe;
-	u32 minor;
 
 	pr_debug("%s: Enter %s\n", dev_name(&pdev->dev), __func__);
 	msm_host = devm_kzalloc(&pdev->dev, sizeof(struct sdhci_msm_host),
@@ -5578,7 +5587,7 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 	if (host->quirks2 & SDHCI_QUIRK2_ALWAYS_USE_BASE_CLOCK)
 		host->quirks2 |= SDHCI_QUIRK2_DIVIDE_TOUT_BY_4;
 
-	minor = IPCAT_MINOR_MASK(readl_relaxed(host->ioaddr +
+	msm_host->minor = IPCAT_MINOR_MASK(readl_relaxed(host->ioaddr +
 				SDCC_IP_CATALOG));
 
 	host_version = readw_relaxed((host->ioaddr + SDHCI_HOST_VERSION));
@@ -5780,7 +5789,7 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 		device_remove_file(&pdev->dev, &msm_host->auto_cmd21_attr);
 	}
 
-	if (minor >= 2) {
+	if (msm_host->minor >= 2) {
 		msm_host->mask_and_match.show = show_mask_and_match;
 		msm_host->mask_and_match.store = store_mask_and_match;
 		sysfs_attr_init(&msm_host->mask_and_match.attr);
