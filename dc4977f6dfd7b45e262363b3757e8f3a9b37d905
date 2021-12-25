@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cfec447f_a74c6260",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2021-12-25T04:50:31Z",
+      "side": 1,
+      "message": "Chain verified on smith, all core functionality working as expected. Will continue to stress test the build, and will report back if any issues come up. But don\u0027t hold merging based on that.",
+      "revId": "dc4977f6dfd7b45e262363b3757e8f3a9b37d905",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
