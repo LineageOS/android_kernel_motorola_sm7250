@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "55318f71_b9729a90",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2022-01-19T17:34:28Z",
+      "side": 1,
+      "message": "Verified on smith, livedisplay works",
+      "revId": "3c39ee4e50272b34ab06cd1b862b8e86cd4ad1ee",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
