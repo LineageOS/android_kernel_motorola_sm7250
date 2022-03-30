@@ -1161,10 +1161,11 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		va_priv->va_hpf_work[decimator].hpf_cut_off_freq =
 							hpf_cut_off_freq;
 
-		if (hpf_cut_off_freq != CF_MIN_3DB_150HZ)
+		if (hpf_cut_off_freq != CF_MIN_3DB_150HZ) {
 			snd_soc_component_update_bits(component, dec_cfg_reg,
 					    TX_HPF_CUT_OFF_FREQ_MASK,
 					    CF_MIN_3DB_150HZ << 5);
+		}
 		if (is_amic_enabled(component, decimator)) {
 			hpf_delay = BOLERO_CDC_VA_TX_AMIC_HPF_DELAY_MS;
 			unmute_delay = BOLERO_CDC_VA_TX_AMIC_UNMUTE_DELAY_MS;

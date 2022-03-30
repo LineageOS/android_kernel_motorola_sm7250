@@ -92,7 +92,17 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/litokiev.h
 	endif
+	ifeq ($(CONFIG_KYOTO_DTB), y)
+		include "$(AUDIO_ROOT)/config/litokiev.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/litokiev.h
+	endif
 
+	ifeq ($(CONFIG_ARCH_SDM660), y)
+		include $(AUDIO_ROOT)/config/sdm660auto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/sdm660autoconf.h
+	endif
 endif
 
 
@@ -132,11 +142,7 @@ ifeq ($(CONFIG_RACER_DTB), y)
 endif
 endif
 
-ifeq ($(CONFIG_KIEV_DTB), y)
-    CDEFINES += -DCONFIG_SND_SOC_AWINIC_AW882XX
-endif
-
-ifeq ($(CONFIG_NAIRO_DTB), y)
+ifneq (,$(filter y, $(CONFIG_NAIRO_DTB) $(CONFIG_KIEV_DTB) $(CONFIG_KYOTO_DTB)))
     CDEFINES += -DCONFIG_SND_SOC_AWINIC_AW882XX
 endif
 

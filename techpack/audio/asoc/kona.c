@@ -79,10 +79,8 @@
 
 #define ADSP_STATE_READY_TIMEOUT_MS 3000
 
-#define WSA8810_NAME_1 "wsa881x.1020170211"
-#define WSA8810_NAME_2 "wsa881x.1020170212"
-#define WSA8815_NAME_1 "wsa881x.1021170213"
-#define WSA8815_NAME_2 "wsa881x.1021170214"
+#define WSA8810_NAME_1 "wsa881x.20170211"
+#define WSA8810_NAME_2 "wsa881x.20170212"
 #define WCN_CDC_SLIM_RX_CH_MAX 2
 #define WCN_CDC_SLIM_TX_CH_MAX 2
 #define WCN_CDC_SLIM_TX_CH_MAX_LITO 3
@@ -690,7 +688,7 @@ static const char *const usb_ch_text[] = {"One", "Two", "Three", "Four",
 					   "Five", "Six", "Seven",
 					   "Eight"};
 static char const *tdm_sample_rate_text[] = {"KHZ_8", "KHZ_16", "KHZ_32",
-					     "KHZ_48", "KHZ_96", "KHZ_176P4",
+					     "KHZ_48", "KHZ_176P4",
 					     "KHZ_352P8"};
 static char const *tdm_bit_format_text[] = {"S16_LE", "S24_LE", "S32_LE"};
 static char const *tdm_ch_text[] = {"One", "Two", "Three", "Four",
@@ -1667,12 +1665,9 @@ static int tdm_get_sample_rate(int value)
 		sample_rate = SAMPLING_RATE_48KHZ;
 		break;
 	case 4:
-		sample_rate = SAMPLING_RATE_96KHZ;
-		break;
-	case 5:
 		sample_rate = SAMPLING_RATE_176P4KHZ;
 		break;
-	case 6:
+	case 5:
 		sample_rate = SAMPLING_RATE_352P8KHZ;
 		break;
 	default:
@@ -1699,14 +1694,11 @@ static int tdm_get_sample_rate_val(int sample_rate)
 	case SAMPLING_RATE_48KHZ:
 		sample_rate_val = 3;
 		break;
-	case SAMPLING_RATE_96KHZ:
+	case SAMPLING_RATE_176P4KHZ:
 		sample_rate_val = 4;
 		break;
-	case SAMPLING_RATE_176P4KHZ:
-		sample_rate_val = 5;
-		break;
 	case SAMPLING_RATE_352P8KHZ:
-		sample_rate_val = 6;
+		sample_rate_val = 5;
 		break;
 	default:
 		sample_rate_val = 3;
@@ -2004,8 +1996,8 @@ static int tdm_slot_map_put(struct snd_kcontrol *kcontrol,
 	int slot_index = 0;
 	int interface = ucontrol->value.integer.value[0];
 	int channel = ucontrol->value.integer.value[1];
-	unsigned int max_slot_offset = 0;
 	unsigned int offset_val = 0;
+	unsigned int max_slot_offset = 0;
 	unsigned int *slot_offset = NULL;
 	struct tdm_dev_config *config = NULL;
 	struct msm_asoc_mach_data *pdata = NULL;
@@ -2031,6 +2023,7 @@ static int tdm_slot_map_put(struct snd_kcontrol *kcontrol,
 		pr_err("%s: tdm config is NULL\n", __func__);
 		return -EINVAL;
 	}
+
 	slot_offset = config->tdm_slot_offset;
 	if (!slot_offset) {
 		pr_err("%s: slot offset is NULL\n", __func__);
@@ -4620,8 +4613,8 @@ static int kona_tdm_snd_hw_params(struct snd_pcm_substream *substream,
 	unsigned int slot_mask, rate, clk_freq;
 	unsigned int *slot_offset;
 	struct tdm_dev_config *config;
-	unsigned int path_dir = 0, interface = 0, channel_interface = 0;
 	struct msm_asoc_mach_data *pdata = NULL;
+	unsigned int path_dir = 0, interface = 0, channel_interface = 0;
 
 	pr_debug("%s: dai id = 0x%x\n", __func__, cpu_dai->id);
 
@@ -4654,6 +4647,7 @@ static int kona_tdm_snd_hw_params(struct snd_pcm_substream *substream,
 		pr_err("%s: tdm config is NULL\n", __func__);
 		return -EINVAL;
 	}
+
 	slot_offset = config->tdm_slot_offset;
 	if (!slot_offset) {
 		pr_err("%s: slot offset is NULL\n", __func__);
@@ -5560,11 +5554,6 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 						WSA_MACRO_SPKR_MODE_1);
 				wsa_macro_set_spkr_gain_offset(component,
 						WSA_MACRO_GAIN_OFFSET_M1P5_DB);
-			} else if (aux_comp->name != NULL && (
-				!strcmp(aux_comp->name, WSA8815_NAME_1) ||
-		    		!strcmp(aux_comp->name, WSA8815_NAME_2))) {
-				wsa_macro_set_spkr_mode(component,
-						WSA_MACRO_SPKR_MODE_DEFAULT);
 			}
 		}
 	}
@@ -8804,8 +8793,8 @@ static int msm_init_aux_dev(struct platform_device *pdev,
 	u32 codec_max_aux_devs = 0;
 	u32 codec_aux_dev_cnt = 0;
 	int i;
-	struct msm_wsa881x_dev_info *wsa881x_dev_info;
-	struct aux_codec_dev_info *aux_cdc_dev_info;
+	struct msm_wsa881x_dev_info *wsa881x_dev_info = NULL;
+	struct aux_codec_dev_info *aux_cdc_dev_info = NULL;
 	const char *auxdev_name_prefix[1];
 	char *dev_name_str = NULL;
 	int found = 0;
@@ -9325,13 +9314,14 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 				   &pdata->tdm_max_slots);
 	if (ret) {
 		dev_err(&pdev->dev, "%s: No DT match for tdm max slots\n",
-			__func__);
+				__func__);
 	}
+
 	if ((pdata->tdm_max_slots <= 0) || (pdata->tdm_max_slots >
-	    TDM_MAX_SLOTS)) {
+	     TDM_MAX_SLOTS)) {
 		pdata->tdm_max_slots = TDM_MAX_SLOTS;
 		dev_err(&pdev->dev, "%s: Using default tdm max slot: %d\n",
-			__func__, pdata->tdm_max_slots);
+				__func__, pdata->tdm_max_slots);
 	}
 
 	pdata->hph_en1_gpio_p = of_parse_phandle(pdev->dev.of_node,

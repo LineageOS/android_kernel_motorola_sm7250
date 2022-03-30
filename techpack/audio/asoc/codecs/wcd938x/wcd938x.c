@@ -774,6 +774,11 @@ static int wcd938x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 			     WCD_CLSH_STATE_HPHR,
 			     hph_mode);
 		wcd_clsh_set_hph_mode(component, CLS_H_HIFI);
+		if (hph_mode == CLS_H_LP || hph_mode == CLS_H_LOHIFI ||
+		    hph_mode == CLS_H_ULP) {
+			snd_soc_component_update_bits(component,
+				WCD938X_HPH_REFBUFF_LP_CTL, 0x01, 0x01);
+		}
 		snd_soc_component_update_bits(component, WCD938X_ANA_HPH,
 					      0x10, 0x10);
 		wcd_clsh_set_hph_mode(component, hph_mode);
@@ -794,6 +799,12 @@ static int wcd938x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 				usleep_range(20000, 20100);
 			else
 				usleep_range(7000, 7100);
+			if (hph_mode == CLS_H_LP ||
+			    hph_mode == CLS_H_LOHIFI ||
+			    hph_mode == CLS_H_ULP)
+				snd_soc_component_update_bits(component,
+					WCD938X_HPH_REFBUFF_LP_CTL, 0x01,
+					0x00);
 			clear_bit(HPH_PA_DELAY, &wcd938x->status_mask);
 		}
 		snd_soc_component_update_bits(component,
@@ -899,6 +910,11 @@ static int wcd938x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 			     WCD_CLSH_STATE_HPHL,
 			     hph_mode);
 		wcd_clsh_set_hph_mode(component, CLS_H_HIFI);
+		if (hph_mode == CLS_H_LP || hph_mode == CLS_H_LOHIFI ||
+		    hph_mode == CLS_H_ULP) {
+			snd_soc_component_update_bits(component,
+				WCD938X_HPH_REFBUFF_LP_CTL, 0x01, 0x01);
+		}
 		snd_soc_component_update_bits(component, WCD938X_ANA_HPH,
 						0x20, 0x20);
 		wcd_clsh_set_hph_mode(component, hph_mode);
@@ -919,6 +935,12 @@ static int wcd938x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 				usleep_range(20000, 20100);
 			else
 				usleep_range(7000, 7100);
+			if (hph_mode == CLS_H_LP ||
+			    hph_mode == CLS_H_LOHIFI ||
+			    hph_mode == CLS_H_ULP)
+				snd_soc_component_update_bits(component,
+					WCD938X_HPH_REFBUFF_LP_CTL,
+					0x01, 0x00);
 			clear_bit(HPH_PA_DELAY, &wcd938x->status_mask);
 		}
 		snd_soc_component_update_bits(component,
@@ -1957,7 +1979,7 @@ static int wcd938x_get_logical_addr(struct swr_device *swr_dev)
 		ret = swr_get_logical_dev_num(swr_dev, swr_dev->addr, &devnum);
 		if (ret) {
 			dev_err(&swr_dev->dev,
-				"%s get devnum %d for dev addr %lx failed\n",
+				"%s get devnum %d for dev addr %llx failed\n",
 				__func__, devnum, swr_dev->addr);
 			/* retry after 1ms */
 			usleep_range(1000, 1010);
@@ -2026,8 +2048,6 @@ static int wcd938x_event_notify(struct notifier_block *block,
 	case BOLERO_WCD_EVT_SSR_DOWN:
 		wcd938x->dev_up = false;
 		wcd938x->mbhc->wcd_mbhc.deinit_in_progress = true;
-		wcd938x->mbhc->wcd_mbhc.plug_before_ssr =
-					wcd938x->mbhc->wcd_mbhc.current_plug;
 		mbhc = &wcd938x->mbhc->wcd_mbhc;
 		wcd938x->usbc_hs_status = get_usbc_hs_status(component,
 						mbhc->mbhc_cfg);

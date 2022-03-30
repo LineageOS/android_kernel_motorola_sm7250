@@ -513,6 +513,17 @@ int adm_programable_channel_mixer(int port_id, int copp_idx, int session_id,
 		pr_err("%s: Invalid port_id %#x\n", __func__, port_id);
 		return -EINVAL;
 	}
+
+	/*
+	 * check if PSPD is already configured
+	 * if it is configured already, return 0 without applying PSPD.
+	 */
+	if (atomic_read(&this_adm.copp.cnt[port_idx][copp_idx]) > 1) {
+		pr_debug("%s: copp.cnt:%#x\n", __func__,
+			atomic_read(&this_adm.copp.cnt[port_idx][copp_idx]));
+		return 0;
+	}
+
 	/*
 	 * First 8 bytes are 4 bytes as rule number, 2 bytes as output
 	 * channel and 2 bytes as input channel.
@@ -2981,7 +2992,7 @@ exit:
  */
 int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 	     int perf_mode, uint16_t bit_width, int app_type, int acdb_id,
-	     int session_type)
+	     int session_type, uint32_t passthr_mode)
 {
 	struct adm_cmd_device_open_v5	open;
 	struct adm_cmd_device_open_v6	open_v6;
@@ -3195,7 +3206,9 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 			}
 
 			open_v8.topology_id = topology;
-			open_v8.reserved = 0;
+			open_v8.compressed_data_type = 0;
+			if (passthr_mode == COMPRESSED_PASSTHROUGH_DSD)
+				open_v8.compressed_data_type = 1;
 
 			/* variable endpoint payload */
 			ep1_payload.dev_num_channel = channel_mode & 0x00FF;
@@ -3268,7 +3281,6 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 			if ((this_adm.num_ec_ref_rx_chans != 0)
 				&& (path != ADM_PATH_PLAYBACK)
 				&& (open_v8.endpoint_id_2 != 0xFFFF)) {
-				this_adm.num_ec_ref_rx_chans = 0;
 				memcpy(adm_params + sizeof(open_v8)
 						+ ep1_payload_size,
 						(void *)&ep2_payload,
@@ -5391,7 +5403,7 @@ int adm_get_source_tracking(int port_id, int copp_idx,
 	 */
 	param_hdr.param_size =
 		sizeof(struct adm_param_fluence_sourcetracking_t) +
-		sizeof(union param_hdrs);
+		sizeof(struct param_hdr_v3);
 
 	/*
 	 * Retrieving parameters out of band, so no need to provide a buffer for
@@ -5420,7 +5432,7 @@ int adm_get_source_tracking(int port_id, int copp_idx,
 	source_tracking_params =
 		(struct adm_param_fluence_sourcetracking_t
 			 *) (this_adm.sourceTrackingData.memmap.kvaddr +
-			     sizeof(struct param_hdr_v1));
+			     sizeof(struct param_hdr_v3));
 	for (i = 0; i < MAX_SECTORS; i++) {
 		sourceTrackingData->vad[i] = source_tracking_params->vad[i];
 		pr_debug("%s: vad[%d] = %d\n",
