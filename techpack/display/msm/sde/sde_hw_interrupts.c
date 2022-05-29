@@ -596,7 +596,6 @@ static void sde_hw_intr_dispatch_irq(struct sde_hw_intr *intr,
 	int end_idx;
 	u32 irq_status;
 	unsigned long irq_flags;
-	int sde_irq_idx;
 
 	if (!intr)
 		return;
@@ -609,11 +608,6 @@ static void sde_hw_intr_dispatch_irq(struct sde_hw_intr *intr,
 	spin_lock_irqsave(&intr->irq_lock, irq_flags);
 	for (reg_idx = 0; reg_idx < intr->sde_irq_size; reg_idx++) {
 		irq_status = intr->save_irq_status[reg_idx];
-
-		/* get the global offset in 'sde_irq_map' */
-		sde_irq_idx = intr->sde_irq_tbl[reg_idx].sde_irq_idx;
-		if (sde_irq_idx < 0)
-			continue;
 
 		/*
 		 * Each Interrupt register has dynamic range of indexes,
