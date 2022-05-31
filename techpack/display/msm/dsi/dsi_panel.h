@@ -267,12 +267,6 @@ enum touch_state {
 	TOUCH_LOW_POWER_STATE,
 };
 
-#define BRIGHTNESS_ALPHA_PAIR_LEN 2
-struct brightness_alpha_pair {
-	u32 brightness;
-	u32 alpha;
-};
-
 struct dsi_panel {
 	const char *name;
 	const char *type;
@@ -351,13 +345,6 @@ struct dsi_panel {
 
 	int panel_recovery_retry;
 	bool is_panel_dead;
-
-	struct brightness_alpha_pair *fod_dim_lut;
-	u32 fod_dim_lut_count;
-	
-	bool hbm_state;
-	bool acl_state;
-	bool cabc_state;
 };
 
 bool dsi_display_all_displays_dead(void);
@@ -489,15 +476,10 @@ int dsi_panel_set_param(struct dsi_panel *panel,
 			struct msm_param_info *param_info);
 
 void dsi_panel_reset_param(struct dsi_panel *panel);
-void dsi_panel_set_custom_param(struct dsi_panel *panel);
 
 int dsi_panel_get_elvss_data(struct dsi_panel *panel);
 int dsi_panel_get_elvss_data_1(struct dsi_panel *panel);
 int dsi_panel_set_elvss_dim_off(struct dsi_panel *panel, u8 val);
 int dsi_panel_parse_elvss_config(struct dsi_panel *panel, u8 elv_vl);
-
-int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status);
-
-u32 dsi_panel_get_fod_dim_alpha(struct dsi_panel *panel);
 
 #endif /* _DSI_PANEL_H_ */
