@@ -16,6 +16,23 @@
       "message": "You need this commit too\nhttps://github.com/kerneltoast/android_kernel_google_floral/commit/ef7343210b47fa08b805db7b685b1640af195231",
       "revId": "58d2f736a5efaf6f798c35ce0c6731e82ace3827",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d05c8d32_a29a950f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 29080
+      },
+      "writtenOn": "2022-06-18T17:07:13Z",
+      "side": 1,
+      "message": "I don\u0027t think it\u0027s a good idea to rice stock kernel, though.",
+      "revId": "58d2f736a5efaf6f798c35ce0c6731e82ace3827",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
