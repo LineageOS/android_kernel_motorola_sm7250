@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "61633122_b93f8a24",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2023-09-12T04:25:38Z",
+      "side": 1,
+      "message": "Fixes broken camera on smith. Needs verified on other supported targets.",
+      "revId": "eb5111dba847257da43e33bd0dc11fb1bc106aa6",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
