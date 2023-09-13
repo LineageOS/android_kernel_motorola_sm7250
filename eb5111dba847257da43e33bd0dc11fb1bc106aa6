@@ -16,6 +16,23 @@
       "message": "Fixes broken camera on smith. Needs verified on other supported targets.",
       "revId": "eb5111dba847257da43e33bd0dc11fb1bc106aa6",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3d4a3b7e_4f45bc8c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 23878
+      },
+      "writtenOn": "2023-09-13T10:42:43Z",
+      "side": 1,
+      "message": "Confirm no breakage on nairo so should also be fine for kiev/racer",
+      "revId": "eb5111dba847257da43e33bd0dc11fb1bc106aa6",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
