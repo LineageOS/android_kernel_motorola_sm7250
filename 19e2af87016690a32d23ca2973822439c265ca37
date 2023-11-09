@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d744f124_6da4fa9f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 23878
+      },
+      "writtenOn": "2023-11-09T01:51:37Z",
+      "side": 1,
+      "message": "Verified on Nairo, device now boots after I9315c9fdc38cae7abf7286e57760521c918cdad6",
+      "revId": "19e2af87016690a32d23ca2973822439c265ca37",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
