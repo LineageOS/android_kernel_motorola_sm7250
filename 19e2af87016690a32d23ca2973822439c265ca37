@@ -16,6 +16,23 @@
       "message": "Verified on Nairo, device now boots after I9315c9fdc38cae7abf7286e57760521c918cdad6",
       "revId": "19e2af87016690a32d23ca2973822439c265ca37",
       "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5a6cae1d_8203cbe1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 14048
+      },
+      "writtenOn": "2023-11-09T04:43:11Z",
+      "side": 1,
+      "message": "No regression on smith",
+      "revId": "19e2af87016690a32d23ca2973822439c265ca37",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
     }
   ]
 }
