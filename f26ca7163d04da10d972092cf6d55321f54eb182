@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0be0d670_2f467147",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 33118
+      },
+      "writtenOn": "2024-12-27T17:34:18Z",
+      "side": 1,
+      "message": "This patch was only specific to msm-4.14 and should not be used on newer kernels anymore. \"ANDROID: fuse: Allocate zeroed memory for canonical path\" fixes the deadlock this patch tries to fix.",
+      "revId": "f26ca7163d04da10d972092cf6d55321f54eb182",
+      "serverId": "1ec6b3db-b2c1-4fa4-84a2-4c7efe89ba71"
+    }
+  ]
+}
